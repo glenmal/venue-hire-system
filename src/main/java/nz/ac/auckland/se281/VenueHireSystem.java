@@ -44,36 +44,31 @@ public class VenueHireSystem {
     // TODO implement this method
     if (size == 1) {
       MessageCli.NUMBER_VENUES.printMessage("is","one","");
+      for (int i=0;i < size;i++) {
+        MessageCli.VENUE_ENTRY.printMessage(((Venue) this.venue_list.get(i)).venue_name,((Venue) this.venue_list.get(i)).venue_code,((Venue) this.venue_list.get(i)).capacity_input,((Venue) this.venue_list.get(i)).hire_fee);
+      }
     }
-    else if (this.venue_list.size() == 2) {
+    else if (size == 2) {
       MessageCli.NUMBER_VENUES.printMessage("are","two","s");
+      for (int i=0;i < size;i++) {
+        MessageCli.VENUE_ENTRY.printMessage(((Venue) this.venue_list.get(i)).venue_name,((Venue) this.venue_list.get(i)).venue_code,((Venue) this.venue_list.get(i)).capacity_input,((Venue) this.venue_list.get(i)).hire_fee);
+      }
     }
-    else if (this.venue_list.size() > 2) {
+    else if (size > 2) {
       MessageCli.NUMBER_VENUES.printMessage("are",size.toString(),"s");
+      for (int i=0;i < size;i++) {
+        MessageCli.VENUE_ENTRY.printMessage(((Venue) this.venue_list.get(i)).venue_name,((Venue) this.venue_list.get(i)).venue_code,((Venue) this.venue_list.get(i)).capacity_input,((Venue) this.venue_list.get(i)).hire_fee);
+      }    
     }
-    else {
+    else if (size <= 0) {
       MessageCli.NO_VENUES.printMessage();
     }
   }
 
   public void createVenue(String venueName, String venueCode, String capacityInput, String hireFeeInput) {
     // TODO implement this method
-    Venue new_venue = new Venue(hireFeeInput, hireFeeInput, hireFeeInput, hireFeeInput);
+    Venue new_venue = new Venue(venueName, venueCode, capacityInput, hireFeeInput);
     Boolean valid_venue = true;
-    int venue_id = -1;
-    String v_name = "";
-    if (this.venue_list.size() > 0) {
-      for (int i=0;i < this.venue_list.size();i++) {
-        if (venueCode == this.venue_list.get(i).venue_code) {
-          venue_id = i;
-          v_name = this.venue_list.get(i).venue_name;
-        }
-      }
-      if (venue_id == -1) {
-        MessageCli.VENUE_NOT_CREATED_CODE_EXISTS.printMessage(venueCode,v_name);
-        valid_venue = false;
-      }
-    }
     if (venueName.replaceAll("\\s", "").isEmpty()) {
       MessageCli.VENUE_NOT_CREATED_EMPTY_NAME.printMessage();
       valid_venue = false;
@@ -97,9 +92,23 @@ public class VenueHireSystem {
       valid_venue = false;
     }
 
+    String v_name = "";
     if (valid_venue) {
-      this.venue_list.add(new_venue);
-      MessageCli.VENUE_SUCCESSFULLY_CREATED.printMessage(venueName,venueCode);
+      for (int i=0;i < this.venue_list.size();i++) {
+        if (((Venue) this.venue_list.get(i)).venue_code.contains(venueCode)) {
+          v_name = ((Venue) this.venue_list.get(i)).venue_name;
+          MessageCli.VENUE_NOT_CREATED_CODE_EXISTS.printMessage(venueCode,v_name);
+          break;
+        }
+        else if (i==this.venue_list.size()-1) {
+          this.venue_list.add(new_venue);
+          MessageCli.VENUE_SUCCESSFULLY_CREATED.printMessage(venueName,venueCode);
+        }
+      }
+      if (this.venue_list.size() == 0) {
+        this.venue_list.add(new_venue);
+        MessageCli.VENUE_SUCCESSFULLY_CREATED.printMessage(venueName,venueCode);
+      }
     }
   }
 
