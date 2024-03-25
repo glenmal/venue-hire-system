@@ -1,10 +1,18 @@
 package nz.ac.auckland.se281;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 import nz.ac.auckland.se281.Types.CateringType;
 import nz.ac.auckland.se281.Types.FloralType;
 
+class numToWords {
+  public static String main(Integer num) {
+    ArrayList<String> conversion = new ArrayList<String>();
+    Collections.addAll(conversion, "zero","one","two","three","four","five","six","seven","eight","nine");
+    return conversion.get(num);
+    }
+}
 
 class Venue {
   String venue_name;
@@ -42,26 +50,26 @@ public class VenueHireSystem {
   public void printVenues() {
     Integer size = this.venue_list.size();
     // TODO implement this method
-    if (size == 1) {
-      MessageCli.NUMBER_VENUES.printMessage("is","one","");
+    if (size <= 0) {
+      MessageCli.NO_VENUES.printMessage();
+    }
+    else if (size == 1) {
+      MessageCli.NUMBER_VENUES.printMessage("is",numToWords.main(size),"");
       for (int i=0;i < size;i++) {
         MessageCli.VENUE_ENTRY.printMessage(((Venue) this.venue_list.get(i)).venue_name,((Venue) this.venue_list.get(i)).venue_code,((Venue) this.venue_list.get(i)).capacity_input,((Venue) this.venue_list.get(i)).hire_fee);
       }
     }
-    else if (size == 2) {
-      MessageCli.NUMBER_VENUES.printMessage("are","two","s");
+    else if (size < 10) {
+      MessageCli.NUMBER_VENUES.printMessage("are",numToWords.main(size),"s");
       for (int i=0;i < size;i++) {
         MessageCli.VENUE_ENTRY.printMessage(((Venue) this.venue_list.get(i)).venue_name,((Venue) this.venue_list.get(i)).venue_code,((Venue) this.venue_list.get(i)).capacity_input,((Venue) this.venue_list.get(i)).hire_fee);
       }
     }
-    else if (size > 2) {
+    else if (size >= 10) {
       MessageCli.NUMBER_VENUES.printMessage("are",size.toString(),"s");
       for (int i=0;i < size;i++) {
         MessageCli.VENUE_ENTRY.printMessage(((Venue) this.venue_list.get(i)).venue_name,((Venue) this.venue_list.get(i)).venue_code,((Venue) this.venue_list.get(i)).capacity_input,((Venue) this.venue_list.get(i)).hire_fee);
       }    
-    }
-    else if (size <= 0) {
-      MessageCli.NO_VENUES.printMessage();
     }
   }
 
@@ -94,20 +102,25 @@ public class VenueHireSystem {
 
     String v_name = "";
     if (valid_venue) {
-      for (int i=0;i < this.venue_list.size();i++) {
-        if (((Venue) this.venue_list.get(i)).venue_code.contains(venueCode)) {
-          v_name = ((Venue) this.venue_list.get(i)).venue_name;
-          MessageCli.VENUE_NOT_CREATED_CODE_EXISTS.printMessage(venueCode,v_name);
-          break;
-        }
-        else if (i==this.venue_list.size()-1) {
-          this.venue_list.add(new_venue);
-          MessageCli.VENUE_SUCCESSFULLY_CREATED.printMessage(venueName,venueCode);
-        }
-      }
       if (this.venue_list.size() == 0) {
         this.venue_list.add(new_venue);
         MessageCli.VENUE_SUCCESSFULLY_CREATED.printMessage(venueName,venueCode);
+      }
+      else {
+        for (int i=0;i < this.venue_list.size();i++) {
+          //  uses loop to check if there is a duplicate venue code
+          if (((Venue) this.venue_list.get(i)).venue_code.contains(venueCode)) {
+            v_name = ((Venue) this.venue_list.get(i)).venue_name;
+            MessageCli.VENUE_NOT_CREATED_CODE_EXISTS.printMessage(venueCode,v_name);
+            // ends loop if an identical venue code is found
+            break;
+          }
+          // creates the new entry if the loop is complete and there is no duplicate code
+          else if (i==this.venue_list.size()-1) {
+            this.venue_list.add(new_venue);
+            MessageCli.VENUE_SUCCESSFULLY_CREATED.printMessage(venueName,venueCode);
+          }
+        }
       }
     }
   }
