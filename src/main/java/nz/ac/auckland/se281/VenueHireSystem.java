@@ -43,7 +43,7 @@ class Booking {
 }
 
 // checks if a string is an integer
-class canParseInt {
+abstract class canParseInt {
   public static boolean main(String string) {
     try {
       Integer.parseInt(string);
@@ -56,11 +56,55 @@ class canParseInt {
 
 public class VenueHireSystem {
 
-  ArrayList<Venue> venue_list = new ArrayList<Venue>();
-  ArrayList<Booking> booking_list = new ArrayList<Booking>();
-  String system_date = "";
+  ArrayList<Venue> venue_list;
+  ArrayList<Booking> booking_list;
+  String system_date;
 
-  public VenueHireSystem() {}
+  public VenueHireSystem() {
+    this.system_date = "";
+    this.booking_list = new ArrayList<Booking>();
+    this.venue_list = new ArrayList<Venue>();
+  }
+
+  // check if venue already booked
+  public String checkBookings(String v_code) {
+    String[] prev_last_date = {this.system_date, ""};
+    for (int i = 0; i < this.booking_list.size(); i++) {
+      if ((((Booking) this.booking_list.get(i)).venue_code.contains(v_code))) {
+        prev_last_date[1] = ((Booking) this.booking_list.get(i)).date_booked;
+        if (check5(0, prev_last_date[0], prev_last_date) == 0) {
+          prev_last_date[0] = prev_last_date[1];
+        }
+      }
+    }
+    prev_last_date[1] = this.system_date;
+    String[] dateParts_options = prev_last_date[0].split("/");
+    Integer day = Integer.parseInt(dateParts_options[0]);
+    if (check5(0, prev_last_date[0], prev_last_date) != 1) {
+      return system_date;
+    } else {
+      day++;
+    }
+    String day_zeros = "";
+    Integer month = Integer.parseInt(dateParts_options[1]);
+    String month_zeros = "";
+    Integer year = Integer.parseInt(dateParts_options[2]);
+    if (day < 10) {
+      day_zeros = "0";
+    }
+
+    if (month < 10) {
+      month_zeros = "0";
+    }
+
+    return day_zeros
+        + day.toString()
+        + "/"
+        + month_zeros
+        + month.toString()
+        + "/"
+        + year.toString();
+  }
 
   public void printVenues() {
     Integer size = this.venue_list.size();
@@ -74,7 +118,8 @@ public class VenueHireSystem {
             ((Venue) this.venue_list.get(i)).venue_name,
             ((Venue) this.venue_list.get(i)).venue_code,
             ((Venue) this.venue_list.get(i)).capacity_input,
-            ((Venue) this.venue_list.get(i)).hire_fee);
+            ((Venue) this.venue_list.get(i)).hire_fee,
+            checkBookings(((Venue) this.venue_list.get(i)).venue_code));
       }
     } else if (size < 10) {
       MessageCli.NUMBER_VENUES.printMessage("are", numToWords.main(size), "s");
@@ -83,7 +128,8 @@ public class VenueHireSystem {
             ((Venue) this.venue_list.get(i)).venue_name,
             ((Venue) this.venue_list.get(i)).venue_code,
             ((Venue) this.venue_list.get(i)).capacity_input,
-            ((Venue) this.venue_list.get(i)).hire_fee);
+            ((Venue) this.venue_list.get(i)).hire_fee,
+            checkBookings(((Venue) this.venue_list.get(i)).venue_code));
       }
     } else if (size >= 10) {
       MessageCli.NUMBER_VENUES.printMessage("are", size.toString(), "s");
@@ -92,7 +138,8 @@ public class VenueHireSystem {
             ((Venue) this.venue_list.get(i)).venue_name,
             ((Venue) this.venue_list.get(i)).venue_code,
             ((Venue) this.venue_list.get(i)).capacity_input,
-            ((Venue) this.venue_list.get(i)).hire_fee);
+            ((Venue) this.venue_list.get(i)).hire_fee,
+            checkBookings(((Venue) this.venue_list.get(i)).venue_code));
       }
     }
   }
@@ -209,23 +256,23 @@ public class VenueHireSystem {
   // checks if the date booked is in the past, and if so, it prints a message and increments the #
   // of fails
   // it then returns the final fails value
-  private int check5(int fails, String[] options) {
-    if (!system_date.isEmpty()) {
+  private int check5(int fails, String date, String[] options) {
+    if (!date.isEmpty()) {
       String[] dateParts_options = options[1].split("/");
       int day = Integer.parseInt(dateParts_options[0]);
       int month = Integer.parseInt(dateParts_options[1]);
       int year = Integer.parseInt(dateParts_options[2]);
-      String[] dateParts_system = system_date.split("/");
+      String[] dateParts_system = date.split("/");
 
       if (year < Integer.parseInt(dateParts_system[2])) {
         fails++;
-        MessageCli.BOOKING_NOT_MADE_PAST_DATE.printMessage(options[1], system_date);
+        MessageCli.BOOKING_NOT_MADE_PAST_DATE.printMessage(options[1], date);
       } else if (month < Integer.parseInt(dateParts_system[1])) {
         fails++;
-        MessageCli.BOOKING_NOT_MADE_PAST_DATE.printMessage(options[1], system_date);
+        MessageCli.BOOKING_NOT_MADE_PAST_DATE.printMessage(options[1], date);
       } else if (day < Integer.parseInt(dateParts_system[0])) {
         fails++;
-        MessageCli.BOOKING_NOT_MADE_PAST_DATE.printMessage(options[1], system_date);
+        MessageCli.BOOKING_NOT_MADE_PAST_DATE.printMessage(options[1], date);
       }
     }
     return fails;
@@ -236,7 +283,7 @@ public class VenueHireSystem {
     // starts the fail checks for making a booking and counts how many fails
     Integer fails = checkstart(options);
     fails = check3_4(fails, options);
-    fails = check5(fails, options);
+    fails = check5(fails, system_date, options);
 
     // makes booking if there are no fails
     if (fails <= 0) {
@@ -266,7 +313,7 @@ public class VenueHireSystem {
             options[3], adjusted_capacity.toString(), full_capacity.toString());
       }
 
-      booking_list.add(new Booking(ven_name, options[0], null, options[1]));
+      booking_list.add(new Booking(ven_name, options[0], adjusted_capacity.toString(), options[1]));
       MessageCli.MAKE_BOOKING_SUCCESSFUL.printMessage(
           BookingReferenceGenerator.generateBookingReference(),
           ven_name,
