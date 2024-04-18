@@ -19,13 +19,26 @@ class Venue {
   String venue_code;
   String capacity_input;
   String hire_fee;
-  String date_booked = "";
 
   public Venue(String venueName, String venueCode, String capacityInput, String hireFeeInput) {
     venue_name = venueName;
     venue_code = venueCode;
     capacity_input = capacityInput;
     hire_fee = hireFeeInput;
+  }
+}
+
+class Booking {
+  String venue_name;
+  String venue_code;
+  String adj_capacity;
+  String date_booked = "";
+
+  public Booking(String venueName, String venueCode, String adjCapacity, String date_booked) {
+    this.venue_name = venueName;
+    this.venue_code = venueCode;
+    this.adj_capacity = adjCapacity;
+    this.date_booked = date_booked;
   }
 }
 
@@ -44,6 +57,7 @@ class canParseInt {
 public class VenueHireSystem {
 
   ArrayList<Venue> venue_list = new ArrayList<Venue>();
+  ArrayList<Booking> booking_list = new ArrayList<Booking>();
   String system_date = "";
 
   public VenueHireSystem() {}
@@ -160,28 +174,33 @@ public class VenueHireSystem {
     return fails;
   }
 
-  // checks if venue code is not in the venue list and if there is
+  // checks if venue code is not in the venue list and if there is a booking already at the same
+  // time
   private int check3_4(int fails, String[] options) {
     Boolean contain = false;
     Boolean booked = false;
     String ven_name = "";
+    // looks in booking list to check if booking hasn't been made already at the same date
+    for (int i = 0; i < this.booking_list.size(); i++) {
+      if ((((Booking) this.booking_list.get(i)).venue_code.contains(options[0]))) {
+        if ((((Booking) this.booking_list.get(i)).date_booked.contains(options[1]))) {
+          booked = true;
+          ven_name = ((Booking) this.booking_list.get(i)).venue_name;
+        }
+      }
+      if (i == this.booking_list.size() - 1 && booked) {
+        fails += 1;
+        MessageCli.BOOKING_NOT_MADE_VENUE_ALREADY_BOOKED.printMessage(ven_name, options[1]);
+      }
+    }
+    // checks venue list if the venue code is valid for booking
     for (int i = 0; i < this.venue_list.size(); i++) {
       if ((((Venue) this.venue_list.get(i)).venue_code.contains(options[0]))) {
         contain = true;
-        if ((((Venue) this.venue_list.get(i)).date_booked.contains(options[1]))) {
-          booked = true;
-          ven_name = ((Venue) this.venue_list.get(i)).venue_name;
-        }
       }
-      if (i == this.venue_list.size() - 1) {
-        if (!contain) {
-          fails += 1;
-          MessageCli.BOOKING_NOT_MADE_VENUE_NOT_FOUND.printMessage(options[0]);
-        }
-        if (booked) {
-          fails += 1;
-          MessageCli.BOOKING_NOT_MADE_VENUE_ALREADY_BOOKED.printMessage(ven_name, options[1]);
-        }
+      if (i == this.venue_list.size() - 1 && !contain) {
+        fails += 1;
+        MessageCli.BOOKING_NOT_MADE_VENUE_NOT_FOUND.printMessage(options[0]);
       }
     }
     return fails;
@@ -214,25 +233,45 @@ public class VenueHireSystem {
 
   public void makeBooking(String[] options) {
 
-    String ven_name = "";
     // starts the fail checks for making a booking and counts how many fails
-    int fails = checkstart(options);
+    Integer fails = checkstart(options);
     fails = check3_4(fails, options);
     fails = check5(fails, options);
 
-    // gets venue name
-    for (int i = 0; i < this.venue_list.size() - 1; i++) {
-      if ((((Venue) this.venue_list.get(i)).venue_code.contains(options[0]))) {
-        ((Venue) this.venue_list.get(i)).date_booked = options[1];
-        ven_name = ((Venue) this.venue_list.get(i)).venue_name;
-        break;
-      }
-    }
-
     // makes booking if there are no fails
     if (fails <= 0) {
+      String ven_name = "";
+      double ven_capacity = 0;
+      Integer adjusted_capacity = Integer.parseInt(options[3]);
+      // gets venue name
+      for (int i = 0; i < this.venue_list.size() - 1; i++) {
+        if ((((Venue) this.venue_list.get(i)).venue_code.contains(options[0]))) {
+          ven_name = ((Venue) this.venue_list.get(i)).venue_name;
+          ven_capacity = Integer.parseInt(((Venue) this.venue_list.get(i)).capacity_input);
+          break;
+        }
+      }
+
+      // adjusts number of attendees if it is less than 25% of the full capacity or greater than
+      // 100% of the full capacity
+      if (Integer.parseInt(options[3]) < Math.ceil(0.25 * ven_capacity)) {
+        adjusted_capacity = (int) Math.ceil(0.25 * ven_capacity);
+        Integer full_capacity = (int) ven_capacity;
+        MessageCli.BOOKING_ATTENDEES_ADJUSTED.printMessage(
+            options[3], adjusted_capacity.toString(), full_capacity.toString());
+      } else if (Integer.parseInt(options[3]) > ven_capacity) {
+        adjusted_capacity = (int) ven_capacity;
+        Integer full_capacity = (int) ven_capacity;
+        MessageCli.BOOKING_ATTENDEES_ADJUSTED.printMessage(
+            options[3], adjusted_capacity.toString(), full_capacity.toString());
+      }
+
+      booking_list.add(new Booking(ven_name, options[0], null, options[1]));
       MessageCli.MAKE_BOOKING_SUCCESSFUL.printMessage(
-          BookingReferenceGenerator.generateBookingReference(), ven_name, options[1], options[3]);
+          BookingReferenceGenerator.generateBookingReference(),
+          ven_name,
+          options[1],
+          adjusted_capacity.toString());
     }
   }
 
