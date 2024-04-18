@@ -8,10 +8,16 @@ abstract class venueParameters {
   protected String venue_name;
   protected String venue_code;
   protected String capacity;
+
+  abstract String getName();
+
+  abstract String getCode();
+
+  abstract String getCapacity();
 }
 
 class Venue extends venueParameters {
-  String hire_fee;
+  private String hire_fee;
 
   public Venue(String venueName, String venueCode, String capacityInput, String hireFeeInput) {
     venue_name = venueName;
@@ -19,12 +25,28 @@ class Venue extends venueParameters {
     capacity = capacityInput;
     hire_fee = hireFeeInput;
   }
+
+  public String getName() {
+    return this.venue_name;
+  }
+
+  public String getCode() {
+    return this.venue_code;
+  }
+
+  public String getCapacity() {
+    return this.capacity;
+  }
+
+  public String getHireFee() {
+    return this.hire_fee;
+  }
 }
 
 class Booking extends venueParameters {
-  String capacity;
-  String date_booked;
-  String booking_reference;
+  private String date_booked;
+  private String booking_reference;
+  private ArrayList<CateringType> catering_list = new ArrayList<CateringType>();
 
   public Booking(
       String venueName,
@@ -37,6 +59,38 @@ class Booking extends venueParameters {
     this.capacity = adjCapacity;
     this.date_booked = date_booked;
     this.booking_reference = booking_reference;
+  }
+
+  public ArrayList<CateringType> getCateringTypes() {
+    return catering_list;
+  }
+
+  public Integer getCateringTotal() {
+    Integer sum = 0;
+    for (int i = 0; i < catering_list.size(); i++) {
+      sum += catering_list.get(i).getCostPerPerson() * Integer.parseInt(this.getCapacity());
+    }
+    return sum;
+  }
+
+  public String getName() {
+    return this.venue_name;
+  }
+
+  public String getCode() {
+    return this.venue_code;
+  }
+
+  public String getCapacity() {
+    return this.capacity;
+  }
+
+  public String getDateBooked() {
+    return this.date_booked;
+  }
+
+  public String getBookingRef() {
+    return this.booking_reference;
   }
 }
 
@@ -56,8 +110,8 @@ public class VenueHireSystem {
   public String checkBookings(String v_code) {
     String[] prev_last_date = {this.system_date, ""};
     for (int i = 0; i < this.booking_list.size(); i++) {
-      if ((((Booking) this.booking_list.get(i)).venue_code.contains(v_code))) {
-        prev_last_date[1] = ((Booking) this.booking_list.get(i)).date_booked;
+      if ((this.booking_list.get(i).getCode().contains(v_code))) {
+        prev_last_date[1] = this.booking_list.get(i).getDateBooked();
         if (check5(0, prev_last_date[0], prev_last_date) == 0) {
           prev_last_date[0] = prev_last_date[1];
         }
@@ -96,11 +150,11 @@ public class VenueHireSystem {
   private void printLoop(int size) {
     for (int i = 0; i < size; i++) {
       MessageCli.VENUE_ENTRY.printMessage(
-          ((Venue) this.venue_list.get(i)).venue_name,
-          ((Venue) this.venue_list.get(i)).venue_code,
-          ((Venue) this.venue_list.get(i)).capacity,
-          ((Venue) this.venue_list.get(i)).hire_fee,
-          checkBookings(((Venue) this.venue_list.get(i)).venue_code));
+          this.venue_list.get(i).getName(),
+          this.venue_list.get(i).getCode(),
+          this.venue_list.get(i).getCapacity(),
+          this.venue_list.get(i).getHireFee(),
+          checkBookings(this.venue_list.get(i).getCode()));
     }
   }
 
@@ -159,8 +213,8 @@ public class VenueHireSystem {
     String v_name = "";
     for (int i = 0; i < this.venue_list.size(); i++) {
       //  uses loop to check if there is a duplicate venue code
-      if (((Venue) this.venue_list.get(i)).venue_code.contains(venueCode)) {
-        v_name = ((Venue) this.venue_list.get(i)).venue_name;
+      if (this.venue_list.get(i).getCode().contains(venueCode)) {
+        v_name = this.venue_list.get(i).getName();
         MessageCli.VENUE_NOT_CREATED_CODE_EXISTS.printMessage(venueCode, v_name);
         fails++;
         // ends loop if an identical venue code is found
@@ -223,10 +277,10 @@ public class VenueHireSystem {
     String ven_name = "";
     // looks in booking list to check if booking hasn't been made already at the same date
     for (int i = 0; i < this.booking_list.size(); i++) {
-      if ((((Booking) this.booking_list.get(i)).venue_code.contains(options[0]))) {
-        if ((((Booking) this.booking_list.get(i)).date_booked.contains(options[1]))) {
+      if ((this.booking_list.get(i).getCode().contains(options[0]))) {
+        if ((this.booking_list.get(i).getDateBooked().contains(options[1]))) {
           booked = true;
-          ven_name = ((Booking) this.booking_list.get(i)).venue_name;
+          ven_name = this.booking_list.get(i).getName();
         }
       }
       if (i == this.booking_list.size() - 1 && booked) {
@@ -236,7 +290,7 @@ public class VenueHireSystem {
     }
     // checks venue list if the venue code is valid for booking
     for (int i = 0; i < this.venue_list.size(); i++) {
-      if ((((Venue) this.venue_list.get(i)).venue_code.contains(options[0]))) {
+      if ((this.venue_list.get(i).getCode().contains(options[0]))) {
         contain = true;
       }
       if (i == this.venue_list.size() - 1 && !contain) {
@@ -286,9 +340,9 @@ public class VenueHireSystem {
       Integer adjusted_capacity = Integer.parseInt(options[3]);
       // gets venue name
       for (int i = 0; i < this.venue_list.size(); i++) {
-        if ((((Venue) this.venue_list.get(i)).venue_code.contains(options[0]))) {
-          ven_name = ((Venue) this.venue_list.get(i)).venue_name;
-          ven_capacity = Integer.parseInt(((Venue) this.venue_list.get(i)).capacity);
+        if ((((Venue) this.venue_list.get(i)).getCode().contains(options[0]))) {
+          ven_name = ((Venue) this.venue_list.get(i)).getName();
+          ven_capacity = Integer.parseInt(((Venue) this.venue_list.get(i)).getCapacity());
           break;
         }
       }
@@ -319,9 +373,9 @@ public class VenueHireSystem {
     String name = "";
     Boolean count = false;
 
-    //
+    // checks if venue code exists in venue list
     for (int i = 0; i < this.venue_list.size(); i++) {
-      if ((((Venue) this.venue_list.get(i)).venue_code.contains(venueCode))) {
+      if ((this.venue_list.get(i).venue_code.contains(venueCode))) {
         name = this.venue_list.get(i).venue_name;
         break;
       } else if (i == this.venue_list.size() - 1) {
@@ -329,22 +383,43 @@ public class VenueHireSystem {
         return;
       }
     }
+    // prints the header and loops through the booking list to print all booking entries for that
+    // venue
     MessageCli.PRINT_BOOKINGS_HEADER.printMessage(name);
     for (int i = 0; i < this.booking_list.size(); i++) {
-      if ((((Booking) this.booking_list.get(i)).venue_code.contains(venueCode))) {
+      if ((((Booking) this.booking_list.get(i)).getCode().contains(venueCode))) {
         count = true;
         MessageCli.PRINT_BOOKINGS_ENTRY.printMessage(
-            this.booking_list.get(i).booking_reference, this.booking_list.get(i).date_booked);
+            this.booking_list.get(i).getBookingRef(), this.booking_list.get(i).getDateBooked());
       }
     }
-    // if there are no bookings
+    // if there are no bookings, prints a message
     if (!count) {
       MessageCli.PRINT_BOOKINGS_NONE.printMessage(name);
     }
   }
 
+  private Booking checkReference(String bookingReference) {
+    Booking booking = null;
+    for (int i = 0; i < this.booking_list.size(); i++) {
+      if ((this.booking_list.get(i).getBookingRef().contains(bookingReference))) {
+        booking = this.booking_list.get(i);
+        break;
+      }
+    }
+    return booking;
+  }
+
   public void addCateringService(String bookingReference, CateringType cateringType) {
-    // TODO implement this method
+    Booking booking = null;
+    booking = checkReference(bookingReference);
+    if (booking != null) {
+      booking.getCateringTypes().add(cateringType);
+      MessageCli.ADD_SERVICE_SUCCESSFUL.printMessage(
+          "Catering (" + cateringType.getName() + ")", bookingReference);
+    } else {
+      MessageCli.SERVICE_NOT_ADDED_BOOKING_NOT_FOUND.printMessage("Catering", bookingReference);
+    }
   }
 
   public void addServiceMusic(String bookingReference) {
@@ -355,7 +430,5 @@ public class VenueHireSystem {
     // TODO implement this method
   }
 
-  public void viewInvoice(String bookingReference) {
-    // TODO implement this method
-  }
+  public void viewInvoice(String bookingReference) {}
 }
