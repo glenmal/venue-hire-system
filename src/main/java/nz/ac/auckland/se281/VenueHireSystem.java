@@ -45,30 +45,93 @@ class Venue extends venueParameters {
 
 class Booking extends venueParameters {
   private String date_booked;
+  private String bookingDate;
   private String booking_reference;
-  private ArrayList<CateringType> catering_list = new ArrayList<CateringType>();
+  private String customer_email;
+  private Boolean music;
+  private CateringType catering;
+  private FloralType floral;
 
   public Booking(
       String venueName,
       String venueCode,
       String adjCapacity,
       String date_booked,
-      String booking_reference) {
+      String booking_reference,
+      String email,
+      String bookingDate) {
     this.venue_name = venueName;
     this.venue_code = venueCode;
     this.capacity = adjCapacity;
     this.date_booked = date_booked;
     this.booking_reference = booking_reference;
+    this.music = false;
+    this.customer_email = email;
+    this.bookingDate = bookingDate;
   }
 
-  public ArrayList<CateringType> getCateringTypes() {
-    return catering_list;
+  public String getBooking_reference() {
+    return booking_reference;
+  }
+
+  public String getCateringNames() {
+    return catering.getName();
+  }
+
+  public String getbookingDate() {
+    return bookingDate;
+  }
+
+  public String getEmail() {
+    return customer_email;
+  }
+
+  public Integer getMusicTotal() {
+    if (music) {
+      return 500;
+    } else {
+      return 0;
+    }
+  }
+
+  public void setMusic() {
+    music = true;
+  }
+
+  public void setFloralTypes(FloralType Floral) {
+    floral = Floral;
+  }
+
+  public FloralType getFloralTypes() {
+    return floral;
+  }
+
+  public String getFloralNames() {
+    if (floral != null) {
+      return floral.getName();
+    }
+    return "";
+  }
+
+  public Integer getFloralTotal() {
+    if (floral != null) {
+      return floral.getCost();
+    }
+    return 0;
+  }
+
+  public CateringType getCateringTypes() {
+    return catering;
+  }
+
+  public void setCateringTypes(CateringType catering) {
+    this.catering = catering;
   }
 
   public Integer getCateringTotal() {
     Integer sum = 0;
-    for (int i = 0; i < catering_list.size(); i++) {
-      sum += catering_list.get(i).getCostPerPerson() * Integer.parseInt(this.getCapacity());
+    if (catering != null) {
+      sum = catering.getCostPerPerson() * Integer.parseInt(getCapacity());
     }
     return sum;
   }
@@ -363,7 +426,13 @@ public class VenueHireSystem {
       String booking_reference = BookingReferenceGenerator.generateBookingReference();
       booking_list.add(
           new Booking(
-              ven_name, options[0], adjusted_capacity.toString(), options[1], booking_reference));
+              ven_name,
+              options[0],
+              adjusted_capacity.toString(),
+              options[1],
+              booking_reference,
+              options[2],
+              system_date));
       MessageCli.MAKE_BOOKING_SUCCESSFUL.printMessage(
           booking_reference, ven_name, options[1], adjusted_capacity.toString());
     }
@@ -412,9 +481,10 @@ public class VenueHireSystem {
 
   public void addCateringService(String bookingReference, CateringType cateringType) {
     Booking booking = null;
+    // checks if booking reference exists, and if it doesn't it prints error message.
     booking = checkReference(bookingReference);
     if (booking != null) {
-      booking.getCateringTypes().add(cateringType);
+      booking.setCateringTypes(cateringType);
       MessageCli.ADD_SERVICE_SUCCESSFUL.printMessage(
           "Catering (" + cateringType.getName() + ")", bookingReference);
     } else {
@@ -423,12 +493,61 @@ public class VenueHireSystem {
   }
 
   public void addServiceMusic(String bookingReference) {
-    // TODO implement this method
+    Booking booking = null;
+    // checks if booking reference exists, and if it doesn't it prints error message.
+    booking = checkReference(bookingReference);
+    if (booking != null) {
+      booking.setMusic();
+      MessageCli.ADD_SERVICE_SUCCESSFUL.printMessage("Music", bookingReference);
+    } else {
+      MessageCli.SERVICE_NOT_ADDED_BOOKING_NOT_FOUND.printMessage("Music", bookingReference);
+    }
   }
 
   public void addServiceFloral(String bookingReference, FloralType floralType) {
-    // TODO implement this method
+    Booking booking = null;
+    // checks if booking reference exists, and if it doesn't it prints error message.
+    booking = checkReference(bookingReference);
+    if (booking != null) {
+      booking.setFloralTypes(floralType);
+      MessageCli.ADD_SERVICE_SUCCESSFUL.printMessage(
+          "Floral (" + floralType.getName() + ")", bookingReference);
+    } else {
+      MessageCli.SERVICE_NOT_ADDED_BOOKING_NOT_FOUND.printMessage("Floral", bookingReference);
+    }
   }
 
-  public void viewInvoice(String bookingReference) {}
+  public void viewInvoice(String bookingReference) {
+    Booking booking = null;
+    Integer sum = 1500;
+    // checks if booking reference exists, and if it doesn't it prints error message.
+    booking = checkReference(bookingReference);
+    if (booking != null) {
+      //  prints invoice content
+      sum += (booking.getCateringTotal() + booking.getMusicTotal() + booking.getFloralTotal());
+      MessageCli.INVOICE_CONTENT_TOP_HALF.printMessage(
+          bookingReference,
+          booking.getEmail(),
+          booking.getbookingDate(),
+          booking.getDateBooked(),
+          booking.getCapacity(),
+          booking.getName());
+      // checks if catering, music, and floral services exist, and only prints the ones that exist
+      MessageCli.INVOICE_CONTENT_VENUE_FEE.printMessage("1500");
+      if (booking.getCateringTypes() != null) {
+        MessageCli.INVOICE_CONTENT_CATERING_ENTRY.printMessage(
+            booking.getCateringNames(), booking.getCateringTotal().toString());
+      }
+      if (booking.getMusicTotal() != 0) {
+        MessageCli.INVOICE_CONTENT_MUSIC_ENTRY.printMessage(booking.getMusicTotal().toString());
+      }
+      if (booking.getFloralTypes() != null) {
+        MessageCli.INVOICE_CONTENT_FLORAL_ENTRY.printMessage(
+            booking.getFloralNames(), booking.getFloralTotal().toString());
+      }
+      MessageCli.INVOICE_CONTENT_BOTTOM_HALF.printMessage(sum.toString());
+    } else {
+      MessageCli.SERVICE_NOT_ADDED_BOOKING_NOT_FOUND.printMessage("Invoice", bookingReference);
+    }
+  }
 }
